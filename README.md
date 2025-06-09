@@ -73,9 +73,7 @@ Cheat sheets or mind maps
 
 Walkthroughs for labs or projects
 
-🧠 Authors
-Chaitanya 
-
+🧠 Author Chaitanya
 Open for collaborations and contributions
 
 
