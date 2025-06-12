@@ -1,0 +1,82 @@
+🛡️ Task: Vulnerability Scanning Using OpenVAS
+🔍 Objective:
+Perform a full vulnerability assessment on a known vulnerable target system using OpenVAS, and generate a report identifying major vulnerabilities.
+
+🧰 Tools Used:
+OpenVAS (GVM)
+
+Browser (for accessing GVM dashboard)
+
+💻 Environment:
+Host OS: Kali Linux (or any Linux distro with OpenVAS)
+
+Target OS: Metasploitable2 / OWASP Juice Shop / DVWA (can be run in VirtualBox, VMware, or Docker)
+
+🛠️ Steps to Follow:
+Install and Configure OpenVAS (if not already installed):
+
+
+sudo apt update
+sudo apt install openvas
+sudo gvm-setup
+sudo gvm-check-setup
+Start OpenVAS:
+
+
+
+sudo gvm-start
+Access the OpenVAS Web UI:
+
+Go to your browser:
+https://localhost:9392
+
+Login using credentials set during setup.
+
+Create a Target:
+
+Navigate to Configuration → Targets → New Target
+
+Enter your vulnerable VM’s IP address (e.g., 192.168.1.10)
+
+Create a Scan Task:
+
+Go to Scans → Tasks → New Task
+
+Select your target from the list
+
+Set Scan Config to "Full and Fast"
+
+Start the scan
+
+View the Results:
+
+After completion, go to Scans → Reports
+
+Download or view the PDF/HTML report
+
+Identify:
+
+At least 3 high-risk vulnerabilities
+
+Their CVE IDs
+
+Short note on how each could be exploited or mitigated
+
+✅ Expected Output:
+Completed scan with report
+
+List of vulnerabilities with brief analysis
+
+Screenshots or saved report (PDF/HTML) for documentation
+
+📝 Documentation Tip:
+Save your findings in a folder like:
+
+
+/CyberTasks/OpenVAS_Task_01/
+  ├── Report.pdf
+  ├── Vulnerability_Summary.txt
+  └── Screenshots/
+Write a short reflection: “What I learned from today’s scan.”
+We have performed an OpenVAS scan, scanned our target, and used DVWA. While doing this, we encountered many challenges and errors, particularly when starting this tool in Kali Linux. However, we have scanned, performed the scan, and conducted a full scan, including CVEs scans. We have generated a full report in both PDF files, identifying 5 high-risk vulnerabilities and their corresponding CVEs and IDs, and written a brief note for each. Meet you next challenge, till then bye.
+
