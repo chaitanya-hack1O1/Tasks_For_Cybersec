@@ -1,0 +1,224 @@
+Infiltrate BadByte and help us to take over root.
+
+Task 1:Reconnaissance
+
+We Need To Do Nmap Scan On Target To Find Open Ports..
+
+Starting Nmap 7.95 ( https://nmap.org ) at  09:54 EDT
+Nmap scan report for 10.201.62.4
+Host is up (0.28s latency).
+Not shown: 999 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+21/tcp open  ftp
+Nmap done: 1 IP address (1 host up) scanned in 63.48 seconds
+
+
+How many ports are open?
+
+Answer:2
+
+What service is running on the lowest open port?
+
+Answer:ssh
+
+What non-standard port is open?
+
+Answer:30024
+
+What service is running on the non-standard port?
+
+Answer:ftp
+
+Next We need to do
+
+Task 2: Foothold
+
+John the Ripper is an Open Source password security auditing and password recovery tool available for many operating systems.
+
+Check out the [Crackthehash](https://tryhackme.com/room/crackthehash) or [Crackthehash2](https://tryhackme.com/room/crackthehashlevel2) for more hash cracking.
+
+To crack ssh private key first use [ssh2john](https://raw.githubusercontent.com/openwall/john/bleeding-jumbo/run/ssh2john.py) python script convert private key to hash (It comes with Kali Linux. Run `locate ssh2john`).
+
+`python path/to/ssh2john.py privatekey > privatekey.hash`
+
+Then use john to crack the hash.
+
+`john privatekey.hash -w=/path/to/wordlist`
+
+Crack the passphrase of the private key and SSH into the machine. Make sure to change the file permissions of SSH private key to 600.
+
+We Have Told To Access Private key to login into ssh butt we won’t’ve access to ssh and to private key now this time i got suck butt we have FTP running on port something ‘30024’ such a long. But point is we can login into it and see what is in it.
+
+at this movement nmap scans are not working so I tried to simple to try default command to login 
+
+  
+
+ftp -d 10.201.62.4 30024 
+setupsockbufsize: rcvbuf_size determined as 131072
+setupsockbufsize: sndbuf_size determined as 16384
+Connected to 10.201.62.4.
+220 (vsFTPd 3.0.5)
+ftp_login: user `<null>' pass `<null>' host `10.201.62.4'
+Name (10.201.62.4:kali): 
+---> USER kali
+530 This FTP server is anonymous only.
+ftp: Login failed
+ftp> exit
+---> QUIT
+221 Goodbye.
+
+
+hey  I got user on ftp running as ‘anonymous’ trying to login with default password 
+
+ 
+
+ftp -d 10.201.62.4 30024 
+setupsockbufsize: rcvbuf_size determined as 131072
+setupsockbufsize: sndbuf_size determined as 16384
+Connected to 10.201.62.4.
+220 (vsFTPd 3.0.5)
+ftp_login: user `<null>' pass `<null>' host `10.201.62.4'
+Name (10.201.62.4:kali): anonymous
+---> USER anonymous
+331 Please specify the password.
+Password: 
+---> PASS XXXX
+230 Login successful.
+
+yehh success i got in 
+
+now where is private key 
+
+LIST -la
+150 Here comes the directory listing.
+drwxr-xr-x    2 ftp      ftp          4096 Mar 23  2021 .
+drwxr-xr-x    2 ftp      ftp          4096 Mar 23  2021 ..
+-rw-r--r--    1 ftp      ftp          1743 Mar 23  2021 id_rsa
+-rw-r--r--    1 ftp      ftp            78 Mar 23  2021 note.txt
+226 Directory send OK.
+
+
+i got id rsa &  something note here
+
+hmm…
+
+after connecting to ftp i used ‘get note.txt && get id_rsa to download it into locally 
+
+What username do we find during the enumeration process?
+
+Answer: errorcauser
+
+What is the passphrase for the RSA private key?
+
+Answer: cupcake
+
+As I know that I have note in that it shows that the user password forgotten 
+
+And We have ssh private key all there but 
+
+and used ‘ssh2john’ to crack the passwd 
+
+Task 3 Port Forwarding:-
+
+
+According to [Wikipedia](https://en.wikipedia.org/wiki/SSH_(Secure_Shell)) SSH or Secure Shell is a cryptographic network protocol for operating network services securely over an unsecured network. Typical applications include remote command-line, login, and remote command execution, but any network service can be secured with SSH.
+
+| Flag | Description |
+| --- | --- |
+| -i | If you want to access a remote server using a private key. |
+| `-L` | For local port forwarding. Followed by
+
+`local_port:remote_address:remote_port` |
+| -R | For remote port forwarding. Followed by
+
+`port:local_address:local_port` |
+| -D | For Dynamic port forwarding. Creates a socks proxy on localhost. Followed by
+
+`local_PORT` |
+| -N | Do not execute a remote command.  This is useful for just forwarding ports |
+
+In the above picture the user from blue server wants to connect to port 80 on the red server but the port is blocked by the firewall. User can connect through ssh and create a tunnel which would allow him to connect to port 80 on the red server. In this case user can use Local port forwarding to connect the port on the red server to his local machine.
+
+To complete this task:
+
+1. Setup **Dynamic Port Forwarding** using SSH:-
+
+```bash
+ssh -i id_rsa -D 1337 [username]@[remote_host
+```
+
+1. Set up proxychains for the **Dynamic Port Forwarding**. Ensure you have commented out `socks4 127.0.0.1 9050` in your proxychains configuration and add `socks5 127.0.0.1 1337` to the end of configuration file (`/etc/proxychains.conf`).The file name may vary depending on the distro you are using.
+    
+2. Run a port scan to enumerate internal ports on the server using proxychains. If you use Nmap your command should look like this `proxychains nmap -sT 127.0.0.1` .
+3. After finding the port of the webserver, perform **Local Port Forwarding** to that port using SSH with the **L** flag.
+
+after connecting to proxy chains Preform nmap scans then i got 3 ports opens on local host 
+
+What main TCP ports are listening on localhost?
+
+Answer:80,3306
+
+What protocols are used for these ports?
+
+Answer:http,mysql
+
+
+Task 4:Web Exploitation
+
+What CMS is running on the machine?
+When analyzing the web application, we can come across that it is developed using Wordpress.
+
+I just Googled the plugins for vulnerabilities and found the answers for the following questions.
+
+1. What is the CVE number for directory traversal vulnerability?
+
+Answer:CVE-2020-11738
+
+What is the CVE number for remote code execution vulnerability?
+
+Answer:CVE-2020-25213
+
+5. There is a metasploit module for the exploit. You can use it to get the reverse shell.
+
+We will this on Metasploit also go just search for wp-file
+
+to get a reverse shell on this machine 
+
+You have to set rhost as 127.0.0.1 ,rport as 8080 , lhost as your tun0 IP and run the exploit. If everything is fine, you will be prompted with the meterpreter session.
+
+after many try i got access to room and flag also 
+
+What is the name of user that was running CMS?
+
+Answer:cth
+
+What is the user flag?
+
+Answer:THM{227906201d17d9c45aa93d0122ea1af7}
+
+Now What Is Next Step And Last Step
+
+Privilege Escalation:
+
+Ok this task we have been told about a importance password
+
+In this task:
+Find that user has left password somewhere accidentally. Management now requires SSH sessions to be logged.
+Guess the user's new password.
+Get the root flag.
+
+let start…
+
+we need to connect to ssh by user ‘cth’
+
+What is the user's **old** password?
+G00dP@$sw0rd2021
+
+What is the root flag?
+
+THM{ad485b44f63393b6a9225974909da5fa}
+
+this machine realized me to read about port forwarding and other things..
+
+thankyou for reading!!!
